@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { BaseAPI } from '../BaseApi';
 import {
+  SUCCESS_CODE,
   UNPROCESSABLE_ENTITY,
   UNAUTHORIZED_CODE,
 } from '../../constants/responseCodes';
@@ -90,6 +91,12 @@ export class UsersApi extends BaseAPI {
       const body = await this.parseBody(response);
 
       expect(body.user.bio).toBe(bio);
+    });
+  }
+
+  async assertSuccessResponseCode(response) {
+    await this.step(`Assert the code ${SUCCESS_CODE} is returned`, async () => {
+      expect(this.parseStatus(response)).toEqual(SUCCESS_CODE);
     });
   }
 
