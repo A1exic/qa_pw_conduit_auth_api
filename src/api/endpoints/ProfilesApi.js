@@ -1,5 +1,9 @@
 import { expect } from '@playwright/test';
 import { BaseAPI } from '../BaseApi';
+import {
+  NOT_FOUND_CODE,
+  UNAUTHORIZED_CODE,
+} from '../../constants/responseCodes';
 
 export class ProfilesApi extends BaseAPI {
   constructor(request) {
@@ -14,6 +18,20 @@ export class ProfilesApi extends BaseAPI {
         headers: this._headers,
       });
     });
+  }
+
+  async getProfileWithToken(username, token) {
+    return await this.step(
+      `Get profile for a user with auth token`,
+      async () => {
+        return await this.request.get(`${this._endpoint}/${username}`, {
+          headers: {
+            ...this._headers,
+            authorization: `Token ${token}`,
+          },
+        });
+      },
+    );
   }
 
   async assertUsernameHasCorrectValue(response, username) {
@@ -50,6 +68,24 @@ export class ProfilesApi extends BaseAPI {
         const body = await this.parseBody(response);
 
         expect(body.profile.following).toBe(false);
+      },
+    );
+  }
+
+  async assertNotFoundResponseCode(response) {
+    await this.step(
+      `Assert the code ${NOT_FOUND_CODE} is returned`,
+      async () => {
+        expect(this.parseStatus(response)).toEqual(NOT_FOUND_CODE);
+      },
+    );
+  }
+
+  async assertUnauthorizedResponseCode(response) {
+    await this.step(
+      `Assert the code ${UNAUTHORIZED_CODE} is returned`,
+      async () => {
+        expect(this.parseStatus(response)).toEqual(UNAUTHORIZED_CODE);
       },
     );
   }

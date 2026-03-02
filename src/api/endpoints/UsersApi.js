@@ -1,5 +1,9 @@
 import { expect } from '@playwright/test';
 import { BaseAPI } from '../BaseApi';
+import {
+  UNPROCESSABLE_ENTITY,
+  UNAUTHORIZED_CODE,
+} from '../../constants/responseCodes';
 
 export class UsersApi extends BaseAPI {
   constructor(request) {
@@ -12,6 +16,15 @@ export class UsersApi extends BaseAPI {
     return await this.step(`Register new user`, async () => {
       return await this.request.post(this._endpoint, {
         data: { user: userData },
+        headers: this._headers,
+      });
+    });
+  }
+
+  async loginUser(credentials) {
+    return await this.step(`Login user`, async () => {
+      return await this.request.post(`${this._endpoint}/login`, {
+        data: { user: credentials },
         headers: this._headers,
       });
     });
@@ -78,5 +91,39 @@ export class UsersApi extends BaseAPI {
 
       expect(body.user.bio).toBe(bio);
     });
+  }
+
+  async assertUnprocessableEntityResponseCode(response) {
+    await this.step(
+      `Assert the code ${UNPROCESSABLE_ENTITY} is returned`,
+      async () => {
+        expect(this.parseStatus(response)).toEqual(UNPROCESSABLE_ENTITY);
+      },
+    );
+  }
+
+  async assertUnauthorizedResponseCode(response) {
+    await this.step(
+      `Assert the code ${UNAUTHORIZED_CODE} is returned`,
+      async () => {
+        expect(this.parseStatus(response)).toEqual(UNAUTHORIZED_CODE);
+      },
+    );
+  }
+
+  async assertErrorMessageInResponseBody(response, message, field) {
+    await this.step(
+      `Assert response body contains error message for '${field}'`,
+      async () => {
+        const body = await this.parseBody(response);
+        const errors = body.errors;
+        const fieldKey = field.includes(':') ? field.split(':')[0] : field;
+        const expectedMessage = message.includes(':')
+          ? message.split(':')[1]
+          : message;
+
+        expect(errors[fieldKey]).toContain(expectedMessage);
+      },
+    );
   }
 }
